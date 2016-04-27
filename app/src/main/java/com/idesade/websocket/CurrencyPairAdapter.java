@@ -98,7 +98,7 @@ public class CurrencyPairAdapter extends Adapter<CurrencyPairViewHolder> impleme
     @Override
     public CurrencyPairViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View itemView = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item, parent, false);
+                .inflate(R.layout.item_main, parent, false);
         return new CurrencyPairViewHolder(itemView);
     }
 
@@ -151,7 +151,7 @@ public class CurrencyPairAdapter extends Adapter<CurrencyPairViewHolder> impleme
 
     @Override
     public void onItemDismiss(int pos) {
-        mCurrencyPairManager.removeCurrencyPair(mCurrencyPairList.get(pos));
+        mCurrencyPairManager.removeCurrencyPair(mCurrencyPairList.get(pos).getType());
     }
 
     public static class CurrencyPairViewHolder extends ViewHolder {
@@ -169,8 +169,13 @@ public class CurrencyPairAdapter extends Adapter<CurrencyPairViewHolder> impleme
 
         public void setItem(CurrencyPair item) {
             mPairName.setText(item.getType().getDisplayName());
-            mBidAsk.setText(String.format("%s / %s", item.getTick().getA(), item.getTick().getB()));
-            mSpread.setText(item.getTick().getSpr());
+            if (item.getTick() != null) {
+                mBidAsk.setText(String.format("%s / %s", item.getTick().getA(), item.getTick().getB()));
+                mSpread.setText(item.getTick().getSpr());
+            } else {
+                mBidAsk.setText(null);
+                mSpread.setText(null);
+            }
         }
     }
 }

@@ -11,12 +11,6 @@ import android.view.ViewGroup;
 
 import com.idesade.websocket.model.CurrencyPairType;
 
-import java.util.LinkedHashSet;
-import java.util.Set;
-
-/**
- * A placeholder fragment containing a simple view.
- */
 public class MainActivityFragment extends Fragment {
 
     public MainActivityFragment() {
@@ -46,13 +40,11 @@ public class MainActivityFragment extends Fragment {
         MainApp.getCurrencyPairManager().loadState();
 
         if (MainApp.getCurrencyPairManager().getCurrencyPairTypeSet().size() == 0) {
-            Set<CurrencyPairType> set = new LinkedHashSet<>();
-            set.add(CurrencyPairType.EURUSD);
-            set.add(CurrencyPairType.EURGBP);
-            set.add(CurrencyPairType.AUDUSD);
-            set.add(CurrencyPairType.EURCHF);
-            set.add(CurrencyPairType.EURJPY);
-            MainApp.getNetworkManager().subscribe(set);
+            MainApp.getCurrencyPairManager().addCurrencyPair(CurrencyPairType.EURUSD);
+            MainApp.getCurrencyPairManager().addCurrencyPair(CurrencyPairType.EURGBP);
+            MainApp.getCurrencyPairManager().addCurrencyPair(CurrencyPairType.AUDUSD);
+            MainApp.getCurrencyPairManager().addCurrencyPair(CurrencyPairType.EURCHF);
+            MainApp.getCurrencyPairManager().addCurrencyPair(CurrencyPairType.EURJPY);
         }
     }
 

@@ -1,5 +1,9 @@
 package com.idesade.websocket.model;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 public enum CurrencyPairType {
 
     EURUSD("EUR/USD"),
@@ -20,5 +24,9 @@ public enum CurrencyPairType {
 
     public String getDisplayName() {
         return mDisplayName;
+    }
+
+    public static Set<CurrencyPairType> asSet(CurrencyPairType... type) {
+        return new HashSet<>(Arrays.asList(type));
     }
 }

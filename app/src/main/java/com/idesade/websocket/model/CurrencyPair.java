@@ -49,7 +49,9 @@ public class CurrencyPair {
         try {
             json.put("type", mType.name());
             json.put("sortIndex", mSortIndex);
-            json.put("tick", mTick.toJSONObject());
+            if (mTick != null) {
+                json.put("tick", mTick.toJSONObject());
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -63,8 +65,10 @@ public class CurrencyPair {
             int sortIndex = jsonObject.getInt("sortIndex");
             CurrencyPair currencyPair = new CurrencyPair(type, sortIndex);
 
-            CurrencyPairTick tick = CurrencyPairTick.fromJSONObject(jsonObject.getJSONObject("tick"));
-            currencyPair.setTick(tick);
+            if (jsonObject.has("tick")) {
+                CurrencyPairTick tick = CurrencyPairTick.fromJSONObject(jsonObject.getJSONObject("tick"));
+                currencyPair.setTick(tick);
+            }
 
             return currencyPair;
         } catch (JSONException e) {

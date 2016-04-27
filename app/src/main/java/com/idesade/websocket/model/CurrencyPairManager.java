@@ -9,9 +9,7 @@ import com.idesade.websocket.MainApp;
 import com.idesade.websocket.WeakListenerList;
 import com.idesade.websocket.WeakListenerList.ListenerRunnable;
 import com.idesade.websocket.model.NetworkManager.NetworkReceiveListener;
-import com.idesade.websocket.model.NetworkManager.NetworkSubscribeListener;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -19,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class CurrencyPairManager implements NetworkSubscribeListener, NetworkReceiveListener {
+public class CurrencyPairManager implements NetworkReceiveListener {
 
     public static final String PREF_NAME = "CurrentState";
     public static final String PREF_SET = "CurrencyPairSet";
@@ -39,15 +37,7 @@ public class CurrencyPairManager implements NetworkSubscribeListener, NetworkRec
 
     public CurrencyPairManager(NetworkManager networkManager) {
         mNetworkManager = networkManager;
-        mNetworkManager.registerSubscribe(this);
         mNetworkManager.registerReceive(this);
-    }
-
-    @Override
-    public void onSubscribed(@NonNull Set<CurrencyPairTick> ticks) {
-        for (CurrencyPairTick tick : ticks) {
-            addCurrencyPair(tick);
-        }
     }
 
     @Override
@@ -89,16 +79,13 @@ public class CurrencyPairManager implements NetworkSubscribeListener, NetworkRec
         });
     }
 
-    public void addCurrencyPair(@NonNull CurrencyPairTick tick) {
-        CurrencyPair currencyPair = mTypeCurrencyPairMap.get(tick.getType());
+    public void addCurrencyPair(@NonNull CurrencyPairType type) {
+        CurrencyPair currencyPair = mTypeCurrencyPairMap.get(type);
         if (currencyPair == null) {
-            currencyPair = new CurrencyPair(tick.getType(), mTypeCurrencyPairMap.size());
-            currencyPair.setTick(tick);
+            currencyPair = new CurrencyPair(type, mTypeCurrencyPairMap.size());
             mTypeCurrencyPairMap.put(currencyPair.getType(), currencyPair);
+            mNetworkManager.subscribe(CurrencyPairType.asSet(type));
             notifyAddPair(currencyPair);
-        } else {
-            currencyPair.setTick(tick);
-            notifyUpdatePair(currencyPair);
         }
     }
 
@@ -110,9 +97,9 @@ public class CurrencyPairManager implements NetworkSubscribeListener, NetworkRec
         }
     }
 
-    public void removeCurrencyPair(@NonNull CurrencyPair currencyPair) {
-        mTypeCurrencyPairMap.remove(currencyPair.getType());
-        mNetworkManager.unsubscribe(currencyPair.getType());
+    public void removeCurrencyPair(@NonNull CurrencyPairType type) {
+        CurrencyPair currencyPair = mTypeCurrencyPairMap.remove(type);
+        mNetworkManager.unsubscribe(CurrencyPairType.asSet(type));
         notifyRemovePair(currencyPair);
     }
 
@@ -151,9 +138,9 @@ public class CurrencyPairManager implements NetworkSubscribeListener, NetworkRec
     }
 
     public void clear() {
-        List<CurrencyPair> clearList = new ArrayList<>(mTypeCurrencyPairMap.values());
-        for (CurrencyPair currencyPair : clearList) {
-            removeCurrencyPair(currencyPair);
+        Set<CurrencyPairType> clearSet = new HashSet<>(mTypeCurrencyPairMap.keySet());
+        for (CurrencyPairType type : clearSet) {
+            removeCurrencyPair(type);
         }
     }
 }

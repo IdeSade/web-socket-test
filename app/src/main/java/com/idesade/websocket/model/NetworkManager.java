@@ -30,10 +30,6 @@ import okio.Buffer;
 
 public class NetworkManager {
 
-    public interface NetworkSubscribeListener {
-        void onSubscribed(@NonNull Set<CurrencyPairTick> ticks);
-    }
-
     public interface NetworkReceiveListener {
         void onReceived(@NonNull List<CurrencyPairTick> ticks);
     }
@@ -50,7 +46,6 @@ public class NetworkManager {
     private WebSocket mWebSocket;
     private Set<CurrencyPairType> mCurrencyPairs = new HashSet<>();
 
-    private final WeakListenerList<NetworkSubscribeListener> mSubscribeListeners = new WeakListenerList<>();
     private final WeakListenerList<NetworkReceiveListener> mReceiveListeners = new WeakListenerList<>();
 
     public NetworkManager() {
@@ -61,7 +56,7 @@ public class NetworkManager {
     }
 
     public void subscribe(@NonNull Set<CurrencyPairType> currencyPairs) {
-        if (mWebSocket == null) {
+        if (mWebSocket == null && currencyPairs.size() > 0) {
             createWebSocketCall(currencyPairs);
         } else {
             final Set<CurrencyPairType> subscribeSet = new HashSet<>(currencyPairs);
@@ -78,12 +73,6 @@ public class NetworkManager {
                 }
             });
         }
-    }
-
-    public void unsubscribe(@NonNull CurrencyPairType currencyPairType) {
-        Set<CurrencyPairType> types = new HashSet<>();
-        types.add(currencyPairType);
-        unsubscribe(types);
     }
 
     public void unsubscribe(@NonNull Set<CurrencyPairType> currencyPairs) {
@@ -104,21 +93,8 @@ public class NetworkManager {
         }
     }
 
-    public void registerSubscribe(NetworkSubscribeListener listener) {
-        mSubscribeListeners.register(listener);
-    }
-
     public void registerReceive(NetworkReceiveListener listener) {
         mReceiveListeners.register(listener);
-    }
-
-    public void notifySubscribed(@NonNull final Set<CurrencyPairTick> ticks) {
-        mSubscribeListeners.forEach(new ListenerRunnable<NetworkSubscribeListener>() {
-            @Override
-            public void run(@NonNull NetworkSubscribeListener listener) {
-                listener.onSubscribed(ticks);
-            }
-        });
     }
 
     public void notifyReceived(@NonNull final List<CurrencyPairTick> ticks) {
@@ -157,8 +133,7 @@ public class NetworkManager {
                     int count = jsonBody.optInt(JSON_SUBSCRIBED_COUNT, -1);
                     if (count > 0) {
                         JSONObject list = jsonBody.getJSONObject(JSON_SUBSCRIBED_LIST);
-                        List<CurrencyPairTick> ticks = ticksFromJson(list.getJSONArray(JSON_TICKS));
-                        notifySubscribed(new HashSet<>(ticks));
+                        notifyReceived(ticksFromJson(list.getJSONArray(JSON_TICKS)));
                     } else if (count < 0) {
                         notifyReceived(ticksFromJson(jsonBody.getJSONArray(JSON_TICKS)));
                     } else {
