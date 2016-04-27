@@ -6,6 +6,7 @@ import android.support.v7.util.SortedList;
 import android.support.v7.widget.RecyclerView.Adapter;
 import android.support.v7.widget.RecyclerView.ViewHolder;
 import android.support.v7.widget.util.SortedListAdapterCallback;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,14 +17,32 @@ import com.idesade.websocket.ItemTouchHelperCallback.ItemTouchHelperAdapter;
 import com.idesade.websocket.model.CurrencyPair;
 import com.idesade.websocket.model.CurrencyPairManager;
 import com.idesade.websocket.model.CurrencyPairManager.CurrencyPairListener;
+import com.idesade.websocket.model.CurrencyPairType;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class CurrencyPairAdapter extends Adapter<CurrencyPairViewHolder> implements
         CurrencyPairListener, ItemTouchHelperAdapter {
 
+    private static final String LOG_TAG = CurrencyPairAdapter.class.getSimpleName();
+
     private final SortedList<CurrencyPair> mCurrencyPairList;
-    private final Handler mHandler = new Handler();
+
     private final CurrencyPairManager mCurrencyPairManager;
     private int mCurrentSelectedPos = -1;
+
+    private final Map<CurrencyPairType, CurrencyPair> mAddMap = new ConcurrentHashMap<>();
+    private final Map<CurrencyPairType, CurrencyPair> mUpdateMap = new ConcurrentHashMap<>();
+    private final Map<CurrencyPairType, CurrencyPair> mRemoveMap = new ConcurrentHashMap<>();
+
+    private final Handler mHandler = new Handler();
+    private Runnable mUpdateRunnable = new Runnable() {
+        @Override
+        public void run() {
+            updateCurrencyPairList();
+        }
+    };
 
     public CurrencyPairAdapter(@NonNull CurrencyPairManager currencyPairManager) {
         mCurrencyPairManager = currencyPairManager;
@@ -43,37 +62,37 @@ public class CurrencyPairAdapter extends Adapter<CurrencyPairViewHolder> impleme
 
                     @Override
                     public boolean areItemsTheSame(CurrencyPair item1, CurrencyPair item2) {
-                        return item1 == item2;
+                        return item1.getType() == item2.getType();
                     }
                 });
     }
 
-    public void add(@NonNull CurrencyPair currencyPair) {
-        if (mCurrentSelectedPos == -1) {
+    private void updateCurrencyPairList() {
+        Log.d(LOG_TAG, "add: " + mAddMap.size() + " update: " + mUpdateMap.size() + " remove: " + mRemoveMap.size());
+        for (CurrencyPair currencyPair : mAddMap.values()) {
             mCurrencyPairList.add(currencyPair);
         }
-    }
-
-    public void remove(@NonNull CurrencyPair currencyPair) {
-        mCurrencyPairList.remove(currencyPair);
-    }
-
-    private void addFromThread(@NonNull final CurrencyPair currencyPair) {
-        mHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                add(currencyPair);
+        mAddMap.clear();
+        for (CurrencyPair currencyPair : mUpdateMap.values()) {
+            if (mCurrentSelectedPos == -1 && mCurrencyPairList.indexOf(currencyPair) != -1) {
+                mCurrencyPairList.add(currencyPair);
             }
-        });
+        }
+        mUpdateMap.clear();
+        for (CurrencyPair currencyPair : mRemoveMap.values()) {
+            mCurrencyPairList.remove(currencyPair);
+        }
+        if (mRemoveMap.size() > 0) {
+            for (int i = 0; i < mCurrencyPairList.size(); i++) {
+                mCurrencyPairList.get(i).setSortIndex(i);
+            }
+        }
+        mRemoveMap.clear();
     }
 
-    private void removeFromThread(@NonNull final CurrencyPair currencyPair) {
-        mHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                remove(currencyPair);
-            }
-        });
+    private void runUpdate() {
+        mHandler.removeCallbacks(mUpdateRunnable);
+        mHandler.post(mUpdateRunnable);
     }
 
     @Override
@@ -95,17 +114,24 @@ public class CurrencyPairAdapter extends Adapter<CurrencyPairViewHolder> impleme
 
     @Override
     public void onAddPair(@NonNull CurrencyPair currencyPair) {
-        addFromThread(currencyPair);
+        mAddMap.put(currencyPair.getType(), currencyPair);
+        mRemoveMap.remove(currencyPair.getType());
+        runUpdate();
     }
 
     @Override
     public void onUpdatePair(@NonNull CurrencyPair currencyPair) {
-        addFromThread(currencyPair);
+        mUpdateMap.put(currencyPair.getType(), currencyPair);
+        mRemoveMap.remove(currencyPair.getType());
+        runUpdate();
     }
 
     @Override
     public void onRemovePair(@NonNull CurrencyPair currencyPair) {
-        removeFromThread(currencyPair);
+        mAddMap.remove(currencyPair.getType());
+        mUpdateMap.remove(currencyPair.getType());
+        mRemoveMap.put(currencyPair.getType(), currencyPair);
+        runUpdate();
     }
 
     @Override

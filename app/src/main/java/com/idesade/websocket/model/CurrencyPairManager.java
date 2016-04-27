@@ -1,18 +1,28 @@
 package com.idesade.websocket.model;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.support.annotation.NonNull;
 
+import com.idesade.websocket.MainApp;
 import com.idesade.websocket.WeakListenerList;
 import com.idesade.websocket.WeakListenerList.ListenerRunnable;
 import com.idesade.websocket.model.NetworkManager.NetworkReceiveListener;
 import com.idesade.websocket.model.NetworkManager.NetworkSubscribeListener;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public class CurrencyPairManager implements NetworkSubscribeListener, NetworkReceiveListener {
+
+    public static final String PREF_NAME = "CurrentState";
+    public static final String PREF_SET = "CurrencyPairSet";
 
     public interface CurrencyPairListener {
         void onAddPair(@NonNull CurrencyPair currencyPair);
@@ -106,5 +116,44 @@ public class CurrencyPairManager implements NetworkSubscribeListener, NetworkRec
         notifyRemovePair(currencyPair);
     }
 
+    private Set<String> getStringSet() {
+        Set<String> stringSet = new HashSet<>();
+        for (CurrencyPair currencyPair : mTypeCurrencyPairMap.values()) {
+            stringSet.add(currencyPair.toJSONObject().toString());
+        }
+        return stringSet;
+    }
 
+    public Set<CurrencyPairType> getCurrencyPairTypeSet() {
+        return Collections.unmodifiableSet(mTypeCurrencyPairMap.keySet());
+    }
+
+    public void saveState() {
+        Editor editor = MainApp.getMainApp().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE).edit();
+        editor.putStringSet(PREF_SET, getStringSet());
+        editor.apply();
+    }
+
+    public void loadState() {
+        mTypeCurrencyPairMap.clear();
+
+        SharedPreferences sp = MainApp.getMainApp().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        Set<String> stringSet = sp.getStringSet(PREF_SET, new HashSet<String>());
+        for (String s : stringSet) {
+            CurrencyPair pair = CurrencyPair.fromJSONString(s);
+            if (pair != null) {
+                mTypeCurrencyPairMap.put(pair.getType(), pair);
+                notifyAddPair(pair);
+            }
+        }
+
+        mNetworkManager.subscribe(getCurrencyPairTypeSet());
+    }
+
+    public void clear() {
+        List<CurrencyPair> clearList = new ArrayList<>(mTypeCurrencyPairMap.values());
+        for (CurrencyPair currencyPair : clearList) {
+            removeCurrencyPair(currencyPair);
+        }
+    }
 }

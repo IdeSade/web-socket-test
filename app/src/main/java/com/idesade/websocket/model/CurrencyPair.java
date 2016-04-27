@@ -1,7 +1,11 @@
 package com.idesade.websocket.model;
 
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class CurrencyPair {
 
@@ -38,6 +42,45 @@ public class CurrencyPair {
 
     public void setSortIndex(int sortIndex) {
         mSortIndex = sortIndex;
+    }
+
+    public JSONObject toJSONObject() {
+        JSONObject json = new JSONObject();
+        try {
+            json.put("type", mType.name());
+            json.put("sortIndex", mSortIndex);
+            json.put("tick", mTick.toJSONObject());
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return json;
+    }
+
+    @Nullable
+    public static CurrencyPair fromJSONObject(@NonNull JSONObject jsonObject) {
+        try {
+            CurrencyPairType type = CurrencyPairType.valueOf(jsonObject.getString("type"));
+            int sortIndex = jsonObject.getInt("sortIndex");
+            CurrencyPair currencyPair = new CurrencyPair(type, sortIndex);
+
+            CurrencyPairTick tick = CurrencyPairTick.fromJSONObject(jsonObject.getJSONObject("tick"));
+            currencyPair.setTick(tick);
+
+            return currencyPair;
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    @Nullable
+    public static CurrencyPair fromJSONString(@NonNull String jsonString) {
+        try {
+            return fromJSONObject(new JSONObject(jsonString));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     @Override

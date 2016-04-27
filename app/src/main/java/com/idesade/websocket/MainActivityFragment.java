@@ -4,14 +4,11 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.RecyclerView.ViewHolder;
 import android.support.v7.widget.helper.ItemTouchHelper;
-import android.support.v7.widget.helper.ItemTouchHelper.SimpleCallback;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.idesade.websocket.CurrencyPairAdapter.CurrencyPairViewHolder;
 import com.idesade.websocket.model.CurrencyPairType;
 
 import java.util.LinkedHashSet;
@@ -46,20 +43,24 @@ public class MainActivityFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
-        Set<CurrencyPairType> set = new LinkedHashSet<>();
-        set.add(CurrencyPairType.EURUSD);
-        set.add(CurrencyPairType.EURGBP);
-        set.add(CurrencyPairType.AUDUSD);
-        set.add(CurrencyPairType.EURCHF);
-        set.add(CurrencyPairType.EURJPY);
+        MainApp.getCurrencyPairManager().loadState();
 
-        MainApp.getNetworkManager().subscribe(set);
+        if (MainApp.getCurrencyPairManager().getCurrencyPairTypeSet().size() == 0) {
+            Set<CurrencyPairType> set = new LinkedHashSet<>();
+            set.add(CurrencyPairType.EURUSD);
+            set.add(CurrencyPairType.EURGBP);
+            set.add(CurrencyPairType.AUDUSD);
+            set.add(CurrencyPairType.EURCHF);
+            set.add(CurrencyPairType.EURJPY);
+            MainApp.getNetworkManager().subscribe(set);
+        }
     }
 
     @Override
     public void onPause() {
         super.onPause();
 
-        MainApp.getNetworkManager().unsubscribe(MainApp.getNetworkManager().getCurrencyPair());
+        MainApp.getCurrencyPairManager().saveState();
+        MainApp.getCurrencyPairManager().clear();
     }
 }

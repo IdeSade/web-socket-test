@@ -14,7 +14,6 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -71,6 +70,7 @@ public class NetworkManager {
                     subscribeSet.remove(currencyPair);
                 }
             }
+            mCurrencyPairs.addAll(subscribeSet);
             AsyncTask.execute(new Runnable() {
                 @Override
                 public void run() {
@@ -94,6 +94,7 @@ public class NetworkManager {
                     unsubscribeSet.add(currencyPair);
                 }
             }
+            mCurrencyPairs.removeAll(unsubscribeSet);
             AsyncTask.execute(new Runnable() {
                 @Override
                 public void run() {
@@ -101,10 +102,6 @@ public class NetworkManager {
                 }
             });
         }
-    }
-
-    public Set<CurrencyPairType> getCurrencyPair() {
-        return Collections.unmodifiableSet(mCurrencyPairs);
     }
 
     public void registerSubscribe(NetworkSubscribeListener listener) {
@@ -161,13 +158,11 @@ public class NetworkManager {
                     if (count > 0) {
                         JSONObject list = jsonBody.getJSONObject(JSON_SUBSCRIBED_LIST);
                         List<CurrencyPairTick> ticks = ticksFromJson(list.getJSONArray(JSON_TICKS));
-                        mCurrencyPairs = pairsFromTicks(ticks);
                         notifySubscribed(new HashSet<>(ticks));
                     } else if (count < 0) {
                         notifyReceived(ticksFromJson(jsonBody.getJSONArray(JSON_TICKS)));
                     } else {
-                        mCurrencyPairs = new HashSet<>();
-                        if (mWebSocket != null) {
+                        if (mWebSocket != null && mCurrencyPairs.size() == 0) {
                             mWebSocket.close(1000, "Close");
                             mWebSocket = null;
                         }
@@ -193,17 +188,12 @@ public class NetworkManager {
     private List<CurrencyPairTick> ticksFromJson(@NonNull JSONArray jsonArray) throws JSONException {
         List<CurrencyPairTick> ticks = new ArrayList<>(jsonArray.length());
         for (int i = 0; i < jsonArray.length(); i++) {
-            ticks.add(CurrencyPairTick.fromJSON(jsonArray.getJSONObject(i)));
+            CurrencyPairTick tick = CurrencyPairTick.fromJSONObject(jsonArray.getJSONObject(i));
+            if (mCurrencyPairs.contains(tick.getType())) {
+                ticks.add(tick);
+            }
         }
         return ticks;
-    }
-
-    private Set<CurrencyPairType> pairsFromTicks(@NonNull List<CurrencyPairTick> ticks) {
-        Set<CurrencyPairType> pairs = new HashSet<>();
-        for (CurrencyPairTick tick : ticks) {
-            pairs.add(tick.getType());
-        }
-        return pairs;
     }
 
     private void sendMessage(@NonNull String template, @NonNull Set<CurrencyPairType> currencyPairs) {

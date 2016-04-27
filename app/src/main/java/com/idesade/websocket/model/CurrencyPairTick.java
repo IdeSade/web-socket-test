@@ -63,7 +63,22 @@ public class CurrencyPairTick {
         mSpr = spr;
     }
 
-    public static CurrencyPairTick fromJSON(@NonNull JSONObject jsonObject) throws JSONException {
+    public JSONObject toJSONObject() {
+        JSONObject json = new JSONObject();
+        try {
+            json.put("s", mType.name());
+            json.put("b", mB);
+            json.put("bf", mBf);
+            json.put("a", mA);
+            json.put("af", mAf);
+            json.put("spr", mSpr);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return json;
+    }
+
+    public static CurrencyPairTick fromJSONObject(@NonNull JSONObject jsonObject) throws JSONException {
         CurrencyPairTick tick = new CurrencyPairTick(CurrencyPairType.valueOf(jsonObject.getString("s")));
         tick.mB = jsonObject.getString("b");
         tick.mBf = jsonObject.getInt("bf");
