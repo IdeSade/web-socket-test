@@ -98,7 +98,7 @@ public class CurrencyPairAdapter extends Adapter<CurrencyPairViewHolder> impleme
     @Override
     public CurrencyPairViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View itemView = LayoutInflater.from(parent.getContext())
-                .inflate(android.R.layout.simple_list_item_1, parent, false);
+                .inflate(R.layout.item, parent, false);
         return new CurrencyPairViewHolder(itemView);
     }
 
@@ -156,17 +156,21 @@ public class CurrencyPairAdapter extends Adapter<CurrencyPairViewHolder> impleme
 
     public static class CurrencyPairViewHolder extends ViewHolder {
 
-        private CurrencyPair mItem;
-        private TextView mTextView;
+        private TextView mPairName;
+        private TextView mBidAsk;
+        private TextView mSpread;
 
         public CurrencyPairViewHolder(View itemView) {
             super(itemView);
-            mTextView = (TextView) itemView;
+            mPairName = (TextView) itemView.findViewById(R.id.pair_name);
+            mBidAsk = (TextView) itemView.findViewById(R.id.bid_ask);
+            mSpread = (TextView) itemView.findViewById(R.id.spread);
         }
 
         public void setItem(CurrencyPair item) {
-            mItem = item;
-            mTextView.setText(item.toString());
+            mPairName.setText(item.getType().getDisplayName());
+            mBidAsk.setText(String.format("%s / %s", item.getTick().getA(), item.getTick().getB()));
+            mSpread.setText(item.getTick().getSpr());
         }
     }
 }
