@@ -7,6 +7,8 @@ import android.support.v7.widget.helper.ItemTouchHelper;
 public class ItemTouchHelperCallback extends ItemTouchHelper.Callback {
 
     public interface ItemTouchHelperAdapter {
+        void onItemSelect(int pos, int actionState);
+
         void onItemMove(int fromPos, int toPos);
 
         void onItemDismiss(int pos);
@@ -23,6 +25,12 @@ public class ItemTouchHelperCallback extends ItemTouchHelper.Callback {
         int dragFlags = ItemTouchHelper.UP | ItemTouchHelper.DOWN;
         int swipeFlags = ItemTouchHelper.START | ItemTouchHelper.END;
         return makeMovementFlags(dragFlags, swipeFlags);
+    }
+
+    @Override
+    public void onSelectedChanged(ViewHolder viewHolder, int actionState) {
+        super.onSelectedChanged(viewHolder, actionState);
+        mAdapter.onItemSelect(viewHolder != null ? viewHolder.getAdapterPosition() : -1, actionState);
     }
 
     @Override

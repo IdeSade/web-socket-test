@@ -23,6 +23,7 @@ public class CurrencyPairAdapter extends Adapter<CurrencyPairViewHolder> impleme
     private final SortedList<CurrencyPair> mCurrencyPairList;
     private final Handler mHandler = new Handler();
     private final CurrencyPairManager mCurrencyPairManager;
+    private int mCurrentSelectedPos = -1;
 
     public CurrencyPairAdapter(@NonNull CurrencyPairManager currencyPairManager) {
         mCurrencyPairManager = currencyPairManager;
@@ -48,7 +49,9 @@ public class CurrencyPairAdapter extends Adapter<CurrencyPairViewHolder> impleme
     }
 
     public void add(@NonNull CurrencyPair currencyPair) {
-        mCurrencyPairList.add(currencyPair);
+        if (mCurrentSelectedPos == -1) {
+            mCurrencyPairList.add(currencyPair);
+        }
     }
 
     public void remove(@NonNull CurrencyPair currencyPair) {
@@ -103,6 +106,11 @@ public class CurrencyPairAdapter extends Adapter<CurrencyPairViewHolder> impleme
     @Override
     public void onRemovePair(@NonNull CurrencyPair currencyPair) {
         removeFromThread(currencyPair);
+    }
+
+    @Override
+    public void onItemSelect(int pos, int actionState) {
+        mCurrentSelectedPos = pos;
     }
 
     @Override
