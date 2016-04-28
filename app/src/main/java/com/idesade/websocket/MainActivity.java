@@ -30,7 +30,7 @@ public class MainActivity extends AppCompatActivity {
         if (id == R.id.action_settings) {
             FragmentManager fm = getSupportFragmentManager();
             fm.beginTransaction()
-                    .add(R.id.fragment, SettingsFragment.newInstance())
+                    .add(R.id.content, SettingsFragment.newInstance())
                     .addToBackStack(null)
                     .commit();
             return true;
